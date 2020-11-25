@@ -1,0 +1,9 @@
+#!/bin/sh
+echo "<<<omni_smart>>>"
+export PATH=/opt/ooce/sbin:/opt/oep/sbin:/sbin:/bin
+for disk in /dev/rdsk/*s0 ; do
+  smartctl -d auto -l scttempsts -A $disk 2>/dev/null \
+  | perl -pe 's/Current Temperature:\s+(\d+)\s+Celsius/Current Drive Temperature:     $1 C/;s{Lifetime\s+Min/Max\s+Temperature:\s+\d+/(\d+)\sCelsius}{Drive Trip Temperature:        $1 C};' \
+  | egrep -v "Smartctl|Copyright" \
+  | egrep "^[A-Z]" |sed "s@^@${disk} @"
+done 

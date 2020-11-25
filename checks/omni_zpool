@@ -1,0 +1,88 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# Copyright OETIKER+PARTNER AG 2015
+# Author Tobi Oetiker <tobi@oetiker.ch>
+#
+# Example output from agent 
+# 
+# <<<omni_zpool>>>
+# NAME    PROPERTY                       VALUE                          SOURCE
+# fast    size                           4776003633152                  -
+# fast    capacity                       79                             -
+# fast    altroot                        -                              default
+# fast    health                         ONLINE                         -
+# fast    guid                           16524146496274345089           default
+# fast    version                        -                              default
+# fast    bootfs                         -                              default
+# fast    delegation                     on                             default
+# fast    autoreplace                    off                            default
+# fast    cachefile                      -                              default
+# fast    failmode                       wait                           default
+# fast    listsnapshots                  off                            default
+# fast    autoexpand                     off                            default
+# fast    dedupditto                     0                              default
+# fast    dedupratio                     1.31x                          -
+# fast    free                           985513385984                   -
+# fast    allocated                      3790490247168                  -
+# fast    readonly                       off                            -
+# fast    comment                        -                              default
+# fast    expandsize                     -                              -
+# fast    freeing                        0                              default
+# fast    fragmentation                  78%                            -
+# fast    leaked                         0                              default
+# fast    feature@async_destroy          enabled                        local
+# fast    feature@empty_bpobj            active                         local
+# fast    feature@lz4_compress           active                         local
+# fast    feature@multi_vdev_crash_dump  enabled                        local
+# fast    feature@spacemap_histogram     active                         local
+# fast    feature@enabled_txg            active                         local
+# fast    feature@hole_birth             active                         local
+# fast    feature@extensible_dataset     enabled                        local
+# fast    feature@embedded_data          active                         local
+# fast    feature@bookmarks              enabled                        local
+# fast    feature@filesystem_limits      enabled                        local
+# fast    feature@large_blocks           enabled                        local
+
+#
+# the inventory function
+
+omni_zpool_default_values = (80,85)
+
+def inventory_omni_zpool(info):   
+    # begin with empty inventory
+    pools = {}
+    inventory = []
+    # loop over all output lines of the agent
+    for line in info:
+        if line[1] == 'allocated':
+           inventory.append((line[0],"omni_zpool_default_values"))
+    return inventory
+
+# the check function (dummy)
+def check_omni_zpool(item, params, info):
+     warn, crit = params
+     state = {}
+     for line in info:
+         if line[0] == item:
+             state[line[1]] = line[2]
+
+     if not state.has_key('allocated'):
+         return (3, "pool %s not found in agent output" % item)
+    
+     usage = float(state['allocated']) / float(state['size']) * 100;
+     status = 0
+     if usage > crit :
+          status = 2 
+     elif usage > warn:
+          status = 1
+     return (status, "Usage is %.2f%%" % usage,  [
+          ( "Usage", usage, warn,crit,0,100)
+     ])
+
+# declare the check to Check_MK
+check_info["omni_zpool"] = {
+    'check_function':            check_omni_zpool,
+    'inventory_function':        inventory_omni_zpool,
+    'service_description':       'Omni zpool %s',
+    'has_perfdata':		 True,
+}

@@ -1,0 +1,8 @@
+title: Drive temperature check for SAS drives
+agents: solaris
+catalog: os/storage
+license: GPL
+distribution: op
+description:
+ This check monitors the temperature of sas drives. It takes the output
+ of {omni_smart}.

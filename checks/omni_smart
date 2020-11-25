@@ -1,0 +1,68 @@
+#!/usr/bin/python
+# -*- encoding: utf-8; py-indent-offset: 4 -*-
+# Copyright OETIKER+PARTNER AG 2015
+# Author Tobi Oetiker <tobi@oetiker.ch>
+#
+# Example output from agent 
+# 
+# <<<omni_smart>>>
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Current Drive Temperature:     45 C
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Drive Trip Temperature:        85 C
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Manufactured in week 32 of year 2012
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Specified cycle count over device lifetime:  50000
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Accumulated start-stop cycles:  23
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Elements in grown defect list: 0
+# /dev/rdsk/c10t5000CCA02A946E21d0s0 Vendor (Seagate) cache information
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Current Drive Temperature:     48 C
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Drive Trip Temperature:        85 C
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Manufactured in week 32 of year 2012
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Specified cycle count over device lifetime:  50000
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Accumulated start-stop cycles:  24
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Elements in grown defect list: 0
+# /dev/rdsk/c11t5000CCA02A927C95d0s0 Vendor (Seagate) cache information
+#
+# the inventory function
+
+omni_smart_default_values = (20,10)
+
+def inventory_omni_smart(info):   
+    # begin with empty inventory
+    disks = {}
+    inventory = []
+    # loop over all output lines of the agent
+    for line in info:
+        disks[line[0].split('/')[-1]]=1
+    for disk in disks.keys():
+        inventory.append((disk,"omni_smart_default_values"))
+    return inventory
+
+# the check function (dummy)
+def check_omni_smart(item, params, info):
+     warn, crit = params
+     trip = -1
+     celsius = -1
+     for line in info:
+         if line[0].split('/')[-1] == item:
+             if line[2] == 'Trip':
+     	         trip = int(line[4])
+	     if line[1] == 'Current' and line[2] == 'Drive' and line[3] == 'Temperature:':
+                 celsius = int(line[4])
+     if trip == -1 or celsius == -1:
+         return (3, "disk %s not found in agent output" % item)
+
+     state = 0
+     if celsius > trip - crit:
+         state = 2 
+     elif celsius > trip - warn:
+         state = 1
+     return (state, "Temperature is %dC (of %dC max)" % (celsius,trip),  [
+         ( "Temperature", celsius, trip - warn,trip - crit)
+     ])
+
+# declare the check to Check_MK
+check_info["omni_smart"] = {
+    'check_function':            check_omni_smart,
+    'inventory_function':        inventory_omni_smart,
+    'service_description':       'Omni SMART drive %s',
+    'has_perfdata':		 True,
+}

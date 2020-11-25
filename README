@@ -1,0 +1,27 @@
+Setup
+-----
+
+On Client
+* copy plugin/* to /opt/oep/lib/check_mk_agent/plugins
+* make sure they are executable
+
+On Master and Slave Servers
+* copy checks and checkman to /opt/omd/sites/prod/local/share/check_mk
+
+On Master Server
+* copy perfometer to /opt/omd/sites/prod/local/share/check_mk/web/plugins/perfometer
+
+
+do whatever magic thing is necessary to make the server see the changes ... 
+
+maybe 
+
+$ check_mk -II
+
+or
+
+# omd restart
+
+not quite clear on that one yet
+
+  

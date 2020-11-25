@@ -1,0 +1,10 @@
+title: Fill State for ZPools
+agents: solaris
+catalog: os/storage
+license: GPL
+distribution: op
+description:
+ For ZFS filesystems the fill state of the pools is a crucial bit of
+ information.  If the pools fill up, performance drops dramatically due to
+ increassed fragmentation.  This check monitors the pool allocation.  It
+ takes the output of {omni_zpool}.
